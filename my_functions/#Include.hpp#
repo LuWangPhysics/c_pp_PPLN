@@ -1,0 +1,5 @@
+#include "/home/luwang/cpp_ppln/c++_ppln_3d/my_functions/my_print.hpp"
+#include "/home/luwang/cpp_ppln/c++_ppln_3d/my_functions/pol.hpp"
+#include "/home/luwang/cpp_ppln/c++_ppln_3d/my_functions/clear_func.hpp"
+#include "/home/luwang/cpp_ppln/c++_ppln_3d/my_functions/my_mpi.hpp"
+#include "/home/luwang/cpp_ppln/c++_ppln_3d/my_functions/fft_initiate.hpp"

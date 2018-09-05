@@ -1,0 +1,8 @@
+//April 1st 2017,lulu's first attempt of c++ PPLN 2d 
+//April 28th 2017. Start parallel. fixed fftw complex to real energy fluctuation problem 
+//May 15th 2017, finished shared memory MPI,but energy fluctuation shows up again might due to alignment reason of FFTW
+//May 17th 2017, finished shared memory MPI, energy fluctuation due to wrong update of RK method. 
+//June 1th 2017, changed to omp instead of MPI. change from rk4 method to lowest storage rk method.
+//July 14th 2017. get 500ps 40 spacial points 2 stage ,5mm in 8hours. changed to 500ps 3mm  
+//July 21st,2017, clear up structres; separate different structres in differet path. will finsh restructre lowest storage RK . Crank-Nicolson structure will follow up.
+//Feb 15 2018. Added copa and spatial phase study.
