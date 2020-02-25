@@ -36,16 +36,20 @@
 
 int main(int argc, char **argv){ 
 
-srand(time(NULL));                                                                    //seed the random number
+    
+int energy_scale= 100*strtol(argv[1], NULL, 10);                                       //fluence scan    
+
+
+srand(time(NULL));                                                                     //seed the random number
 const double pi = M_PI;   
-const double c=3e8;                                                                  //Speed of light  
- //const double eps =8.85e-12;                                                       //Free space permittivity  
+const double c=3e8;                                                                    //Speed of light  
+ //const double eps =8.85e-12;                                                         //Free space permittivity  
 
 
     
 mytime time_count;
 time_count.start();
-std::cout.precision(10);                                                              //change the default prcision std   
+std::cout.precision(10);                                                               //change the default prcision std   
     
 //***************************
 //MPI operation
@@ -69,19 +73,22 @@ omp_set_num_threads(n_thread);
 //Pump pulse Parameters
 //--------------------------------------------------------------------
 
-double sigma_ch=(5.0/3.0);
-int n_gaussian=5;                                                                    //super gaussian order
-double sigma_in=sigma_ch*3e-3;                                                       // Input beam waist
+double sigma_ch=(1.5/3.0);
+int n_gaussian=1;                                                                      //super gaussian order
+double sigma_in=sigma_ch*3e-3;                                                         // Input beam waist
 //10/0.02a 3b 5c 7d 11e 13f, where e+f is either 0 or 1
-double lambda_0    = 1030e-9;
-double tau_fwhm    = 150e-12;//50*N_tau*1e-12;                                        //Input pulse fwhm
-double tau = tau_fwhm/(sqrt(2*log(2)));                                              //Converting from FWHM to 1/e^2 value. e^(-t^2/(2*tau^2))
-double f_max       = 75e12;    //4stages 120                                                       //2*f_max =frequency range ,120
-double df          = 0.0002e12;//0.0002e12 500ps 0.0004e12 150ps;                                          //frequency step size
+double lambda_0    = 1030.4e-9;
+double tau_fwhm    = 250e-12;                                                          //Input pulse fwhm
+double tau = tau_fwhm/(sqrt(2*log(2)));                                                //Converting from FWHM to 1/e^2 value. e^(-t^2/(2*tau^2))
+double f_max       = 45e12;    //4stages 120                                           //2*f_max =frequency range ,120
+double df          = 0.0003e12;//0.0002e12 500ps 0.0004e12 150ps;                      //frequency step size
 double omega_0 =  2*pi*c/lambda_0;
-double f_c_thz=0.3e12;                                                               //define thz center frequency 
+double f_c_thz=0.53e12;                                                                //define thz center frequency 
+
+
 //peak fluence is fixed to damage and the energy is scaled with respect to peak fluence.
-double energy=2*pi*pow(sigma_in,2)*std::tgamma(1.0*(n_gaussian+1.0)/n_gaussian)*1e5*sqrt(tau_fwhm/2/1e-8)/pow(2,(1.0/n_gaussian));   //pulse energy J
+
+double energy=(energy_scale/1.1180e+04)*2*pi*pow(sigma_in,2)*std::tgamma(1.0*(n_gaussian+1.0)/n_gaussian)*1e5*sqrt(tau_fwhm/2/1e-8)/pow(2,(1.0/n_gaussian));   //pulse energy J
 double F_peak=pow(2,(1.0/n_gaussian))*energy/(2*pi*pow(sigma_in,2)*std::tgamma(1.0*(n_gaussian+1.0)/n_gaussian)); //peak fluence
 double energy_comb=100e-3;
 double sigma_comb=sigma_in;
@@ -90,8 +97,8 @@ double F_peak_comb=pow(2,(1.0/n_gaussian))*energy_comb/(2*pi*pow(sigma_comb,2)*s
 //-----------------------------------------------------------------------
 //spacial discritization
 //---------------------------------------------------------------------
-double dr =sigma_ch*2e-5;  //1.0e-4
-double crystal_size=sigma_ch*5e-3;
+double dr =sigma_ch*8e-5;  //1.0e-4 2e-5 for phase study
+double crystal_size=sigma_ch*10e-3; //5e-3 for flattop
 int N_r;
 //rescale the mesh point to fit the thread number
 adjust_mesh_r(N_r, world_size, n_thread, crystal_size, dr);
@@ -107,7 +114,7 @@ double n2      =  1.25e-19;                                                     
 
 //----------------------------------------------------------------------
 //define THz and IR frequency +refractive index matrix
-//----------------------------------------------1.0----------------------
+//---------------------------------------------------------------------
 //IR****************************************************************
 int N_f,N_f_thz;
 int   NN_f=2*(f_max/df);
@@ -121,17 +128,16 @@ Material LiNb(tf,f_c_thz,df);
 //define phase matched period
 //----------------------------------------------------------------------
 
-int Nppln=145; //145 for 150ps 190for 500ps stages                                                    // Total number of poling periods                                                     
-int nz_ppln=75; //35                                                                 //number of steps in one period
-double dppln=c/(2*LiNb.f_c_thz*(LiNb.n_thz_c-LiNb.n_g));                              // Thickness of each poling period
+int Nppln=400; //145 for 150ps 190for 500ps stages                                   // Total number of poling periods                                                     
+int nz_ppln=75; //75                                                                 //number of steps in one period
+double dppln=c/(2*LiNb.f_c_thz*(LiNb.n_thz_c-LiNb.n_g));                             // Thickness of each poling period
 int   Num_stage=1;
 MESH::spacial_z my_z(dppln,Nppln,nz_ppln,chi_2);
 
-//std::vector<double> l_sta={0.8,0.8,0.45,0.45};//500ps
-std::vector<double> l_sta={0.92,0.75,0.45,0.45};                                             //smaller than 1, crystal length 
-//std::vector<double> l_sta={0.92,0.96,0.96,0.76}; //copensate dispersion
+
+std::vector<double> l_sta={1};                                                        //smaller than 1, crystal length 
 double stage_phase=0;
-int   N_zz=0;
+int   N_zz;
 
 //--------------------------------------------------          
 //define input e_field and the derivative matrix
@@ -144,7 +150,7 @@ const double delta_safe=1e-16;
 U_ir.array()+=delta_safe;
 U_thz.array()+=delta_safe;
 input_field(my_r,F_peak_comb,F_peak,sigma_in,n_gaussian,tf,U_ir,tau,LiNb);
-
+U_ir*=sqrt(1-pow(1-LiNb.n_ir_0,2)/pow(1+LiNb.n_ir_0,2));                             //fresnel loss
 
 //---------------------------------------------------
 //define calculation constants
@@ -156,14 +162,15 @@ myconst.n_nested=n_nested;
 
 Eigen::MatrixXcd P_ir=Eigen::MatrixXcd::Zero(N_f,N_r);
 Eigen::MatrixXcd P_thz=Eigen::MatrixXcd::Zero(N_f_thz,N_r);
-std::string save_path="/data/netapp/luwang/2D_150ps_4stages_effSaturate/2D_with_diffraction/2_lines/wave_front_5mm_one_has_sinPhase/0.05_2pi_moudulaton/";
 
-save_array(tf.N_f,my_r.N_r,U_ir,save_path+"E_ir_input.txt" );
-Output mydata(save_path);
+std::string save_path="/gpfs/cfel/ufox/scratch/user/luwang/2D_250ps_2lines/bc_dieletric/";
+std::string extra_name=std::to_string(energy_scale)+"mjpercm2_";
+//std::string extra_name+="err_stepz" +std::to_string(nz_ppln)+"_dz_"+std::to_string(my_z.dz*1e6);
+save_path+=extra_name;
 
-mydata.Energy_ir=Eigen::ArrayXd::Zero(my_z.N_z-1);
-mydata.Energy_thz=Eigen::ArrayXd::Zero(my_z.N_z-1);
-mydata.E_thz_final=Eigen::MatrixXcd::Zero(N_f_thz,N_r);
+
+Output mydata(save_path,tf,my_r,my_z,U_ir);
+
 
 
 //--------------------------------------------------------------
@@ -174,8 +181,7 @@ mydata.E_thz_final=Eigen::MatrixXcd::Zero(N_f_thz,N_r);
 //**************************************************
 lowest_storage_RK RK( N_f_thz,N_f, my_r);
 RK.assign();
-//krank_nicolson_CN CN;
-//CN.assign(my_r,my_z);
+
 
 //--------------------------------------------------------------
 //FFTW initialization in my myfft structures
@@ -196,42 +202,43 @@ for(int N_sta=0;N_sta<Num_stage;N_sta++)
 {
 
         mydata.Energy_ir.setZero();
-        mydata.Energy_thz.setZero();
+        mydata.Energy_thz=0;
         U_thz.setZero();
         U_thz.array()+=delta_safe;
         N_zz=my_z.N_z*l_sta[N_sta];
 
-        for(int j=0;j<N_zz-1;j++)//N_zz-1
-        {  
+        for(int j=0;j<N_zz-1;j++){  
             myconst.chi_2=my_z.chi_2_z(j);
             myconst.phase(my_z.z_0(j),stage_phase,my_z.dz,LiNb);
             //-----------------------------------------------------
             //numerical method
             //------------------------------------------------------
             RK.method(world_size,n_thread, Fmy, myconst,  U_ir, P_ir,  U_thz, P_thz,  LiNb ,my_z.dz,iterations );
-
-            //CN.method)();
-            //------------------------------------------------------
-            if(world_rank==0)
-            {   mydata.spectrum_energy(df,U_ir,U_thz,j,my_r,LiNb);
-                print(j);  
-// 		if((j%10)==0){
-// 			save_array(tf.N_f,my_r.N_r,U_ir,save_path+"E_ir_movie_"+std::to_string(j)+".txt" );
-// 			save_array(tf.N_f_thz,my_r.N_r,U_thz,save_path+"E_thz_movie_"+std::to_string(j)+".txt" );
-// 		}
+           
+            mydata.spectrum_energy(U_ir,U_thz,j,my_r,my_z,LiNb);
+            
+            print(j); 
+            
+            if(world_rank==0){  
+                if((j%int(10e-3/my_z.dz))==0){
+                  
+                       save_array(my_z.N_z-1,mydata.Eff.data(),save_path+"eff.txt" );
+                       save_array(tf.N_f,mydata.ir_spectrum.data(),save_path+"ir_spectrum_"+std::to_string(int(j*my_z.dz*1000))+".txt" );
+                       
+                }
             }
+            
 
         }
 
     
-        if(world_rank==0)
-        { 
-            mydata.save(N_sta,my_z,Fmy,U_ir,U_thz,tf,myconst.phase_thz,my_r,LiNb);
+        if(world_rank==0){   
+            mydata.save(N_sta,my_z,Fmy,U_ir,U_thz,tf,myconst.phase_thz,my_r,LiNb,int(my_z.z_0[N_zz-1]*1000));
             print(iterations);
             stage_phase+=my_z.z_0(N_zz-1);
         }
         
-        
+
         
 }
 
@@ -241,8 +248,6 @@ for(int N_sta=0;N_sta<Num_stage;N_sta++)
 //REMOVE all the input pointers from fftw, VERY IMPORTANT
 //****************************************************
 Fmy.my_fftw_clean();
-
-
 
 
 

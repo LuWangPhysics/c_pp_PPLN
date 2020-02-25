@@ -19,7 +19,18 @@ void two_lines_sinc(Eigen::ArrayXcd& e_w,const double& F_peak,const double& sigm
     double tau_fwhm=tau*(sqrt(2*log(2)));
    //sin(pi*f*tau_fwhm)/f
     
-     e_w=my_sinc((tau_fwhm/2)*delta_omega.array())+my_sinc((tau_fwhm/2)*(delta_omega-2*pi*f_c_thz).array());  //spectrum shape 
+     //e_w=my_sinc((tau_fwhm/2)*delta_omega.array())+my_sinc((tau_fwhm/2)*(delta_omega-2*pi*f_c_thz).array());  //spectrum shape 
+     
+     
+     std::vector<double> energy_ratio={0.01768,0.4123,0.05971,0.003933};
+     std::vector<int>      f_p={-2,-1,1,2};
+     e_w=my_sinc((tau_fwhm/2)*delta_omega.array());
+     for( int k=0;k<4; k++){
+     e_w=e_w+sqrt(energy_ratio[k])*my_sinc((tau_fwhm/2)*(delta_omega- f_p[k]*2*pi*f_c_thz ));  //spectrum shape 
+     }
+    
+     
+     
 
     F_pump_total=0.5*c*eps*(abs2(e_w)*n_ir_b).sum()*df; 
 

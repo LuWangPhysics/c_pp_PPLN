@@ -35,7 +35,7 @@ void test_line(int n){
 
         void save_array(int N_f,const double* a,std::string b )
         {
-  
+            
             std::ofstream myfile(b);
             myfile.precision(15);
             myfile.setf(std::ios::showpoint);
@@ -61,7 +61,7 @@ void test_line(int n){
         }
 
         void save_array(int N_f,int N_x,const Eigen::MatrixXcd& a,std::string b )
-        {
+        { 
         
             std::ofstream myfile(b);
             myfile.precision(15);

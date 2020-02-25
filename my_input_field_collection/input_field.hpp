@@ -21,12 +21,16 @@ void input_field(const MESH::spacial_r& my_r,const double& F_peak_comb,const dou
 //Eigen save array in colum major
 //E=exp(-(r^2/2sigma^2)^n_gaussian)
 //------------------------------------------------------------------------------------------
-    int n_half=tf.N_f/2+2*log(2)/tau/df;			// 0:n_half covers one strong line
+   // int n_half=tf.N_f/2+2*log(2)/tau/df;			// 0:n_half covers one strong line
  
-    for(int i=0;i<my_r.N_r+2;i++)
-    {   //(1+0.05*cos(2.0*pi*4.0*i*my_r.dr/my_r.r_0(my_r.N_r)))   input intensity sin
-	double phase_n=spatial_phase(my_r,i);        
+    for(int i=0;i<my_r.N_r+2;i++){
+  
+	    
 	U_ir.col(i).array()+=e_w*exp(-pow(pow(my_r.r_0[i]/sigma_in,2)/2,n_gaussian));     //out product of frequency and position  
+    
+//-----------------------------------------------------------------------------------
+//add curved intensity front, the lower frequency line has a spacial dependent phase.
+//---------------------------------------------------------------------------------
 	//half intensity sign	
 	//U_ir.col(i).head(n_half).array()+=U_ir.col(i).head(n_half).array()*0.05*cos(2.0*pi*4.0*i*my_r.dr/my_r.r_0(my_r.N_r));    
                         
@@ -34,8 +38,9 @@ void input_field(const MESH::spacial_r& my_r,const double& F_peak_comb,const dou
 //add curved phase front, the lower frequency line has a spacial dependent phase.
 //---------------------------------------------------------------------------------
   	 
-	//one has sin phase
-  	U_ir.col(i).head(n_half).array()=U_ir.col(i).head(n_half).array()*exp(II*phase_n*0.05);     
+	//one has sin phase 
+    //double phase_n=spatial_phase(my_r,i);    
+  	//U_ir.col(i).head(n_half).array()=U_ir.col(i).head(n_half).array()*exp(II*phase_n*0.1);     
 	//U_ir.col(i).array()=U_ir.col(i).array()*exp(II*phase_n);     
     }
 

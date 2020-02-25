@@ -17,16 +17,16 @@ struct lowest_storage_RK
      std::complex<double> II={{0,1}};
     lowest_storage_RK(const int& N_f_thz_,const int& N_f_,const MESH::spacial_r& my_r_): N_f_thz(N_f_thz_),N_f(N_f_),r_0(my_r_.r_0),N_r(my_r_.N_r){dr=r_0(1)-r_0(0);}
     ~lowest_storage_RK(){}
-void assign();
-void method(const int& world_size,const int& n_thread,myfft& Fmy,const P_const& myconst, Eigen::MatrixXcd& U_ir,Eigen::MatrixXcd& P_ir, Eigen::MatrixXcd& U_thz,Eigen::MatrixXcd& P_thz, Material& LiNb ,const double& dz,std::vector<int>& iterations );
+    void assign();
+    void method(const int& world_size,const int& n_thread,myfft& Fmy,const P_const& myconst, Eigen::MatrixXcd& U_ir,Eigen::MatrixXcd& P_ir, Eigen::MatrixXcd& U_thz,Eigen::MatrixXcd& P_thz, Material& LiNb ,const double& dz,std::vector<int>& iterations );
 
 
-
-void bc_metal(Eigen::MatrixXcd& U_ir, Eigen::MatrixXcd& U_thz);
-template<typename A>
-void bc_dieletric(Eigen::MatrixXcd& U_ir, Eigen::MatrixXcd& U_thz,const A& LiNb);    
-template<typename A>
-void bc_transparent(Eigen::MatrixXcd& U_ir, Eigen::MatrixXcd& U_thz,const A& ekx,const A& ekx_t);
+    void bc_metal(Eigen::MatrixXcd& U_ir, Eigen::MatrixXcd& U_thz);
+    template<typename A>
+    void bc_dieletric(Eigen::MatrixXcd& U_ir, Eigen::MatrixXcd& U_thz,const A& LiNb);    
+    
+    template<typename A>
+    void bc_transparent(Eigen::MatrixXcd& U_ir, Eigen::MatrixXcd& U_thz,const A& ekx,const A& ekx_t);
 
 
 };
@@ -81,11 +81,11 @@ void lowest_storage_RK::bc_dieletric(Eigen::MatrixXcd& U_ir, Eigen::MatrixXcd& U
                     U_thz.col(0)=U_thz.col(1);
                     //electrif field in dieletric E_in*eps_in=E_out*eps_out.
                     U_ir.col(N_r+1)=U_ir.col(N_r).array()*pow(LiNb.n_ir_b.array(),2)*r_0(N_r)/r_0(N_r+1);//dieletric
-		   //remove the awful high refractive index at large terahertz frequency	
-		    int thz_range =LiNb.n_thz.size()-40*LiNb.f_c_thz/LiNb.df;
+                    //remove the awful high refractive index at large terahertz frequency	
+                    int thz_range =LiNb.n_thz.size()-10*LiNb.f_c_thz/LiNb.df;
 		    
                     U_thz.col(N_r+1).array()=U_thz.col(N_r).array()*pow(LiNb.n_thz.array(),2)*r_0(N_r)/r_0(N_r+1);
-		    U_thz.col(N_r+1).tail(thz_range).array()=0;
+                    U_thz.col(N_r+1).tail(thz_range).array()=0;
 	
 }
 template<typename A>
@@ -173,8 +173,8 @@ void lowest_storage_RK::method(const int& world_size,const int& n_thread,myfft& 
                     //---------------------------------------------------------------------------------------------
                     //boundary conditions ///number 1-N_r is the real matrix we want, 0 and N_r+1 are ghost points!
                     //---------------------------------------------------------------------------------------------
-                    bc_metal(U_ir, U_thz);
-                   // bc_dieletric(U_ir,U_thz,LiNb);
+                  // bc_metal(U_ir, U_thz);
+                    bc_dieletric(U_ir,U_thz,LiNb);
                     //bc_transparent(U_ir,U_thz,ekx,ekx_t);
                 
                     
